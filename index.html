@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Math Explorers: Missing Addend & Math Mystery</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+
+        body {
+
+            font-family: 'Fredoka', cursive, sans-serif;
+
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #f3e8ff 100%);
+
+            min-height: 100vh;
+
+            user-select: none;
+
+        }
+
+
+
+        .bounce-gentle {
+
+            animation: bounce 2s infinite;
+
+        }
+
+
+
+        @keyframes bounce {
+
+            0%, 100% { transform: translateY(0); }
+
+            50% { transform: translateY(-8px); }
+
+        }
+
+
+
+        .wiggle {
+
+            animation: wiggle 0.5s ease-in-out;
+
+        }
+
+
+
+        @keyframes wiggle {
+
+            0%, 100% { transform: rotate(0deg); }
+
+            25% { transform: rotate(-5deg); }
+
+            75% { transform: rotate(5deg); }
+
+        }
+
+
+
+        .counter-pop {
+
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+
+
+        @keyframes popIn {
+
+            0% { transform: scale(0); opacity: 0; }
+
+            100% { transform: scale(1); opacity: 1; }
+
+        }
+
+
+
+        .takeaway-cross {
+
+            position: relative;
+
+        }
+
+        .takeaway-cross::after {
+
+            content: '❌';
+
+            position: absolute;
+
+            font-size: 1.2rem;
+
+            line-height: 1;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+
+
+        ::-webkit-scrollbar {
+
+            width: 8px;
+
+        }
+
+        ::-webkit-scrollbar-track {
+
+            background: #f1f1f1;
+
+            border-radius: 10px;
+
+        }
+
+        ::-webkit-scrollbar-thumb {
+
+            background: #cbd5e1;
+
+            border-radius: 10px;
+
+        }
+
+    </style>
+
+</head>
+
+<body class="flex flex-col items-center justify-between p-3 sm:p-6 text-slate-800 min-h-screen">
+
+
+
+    <!-- TOP HEADER / SCOREBOARD -->
+
+    <header class="w-full max-w-3xl bg-white/90 backdrop-blur shadow-lg rounded-3xl p-3 sm:p-4 mb-4 flex flex-wrap justify-between items-center gap-2 border-4 border-amber-300">
+
+        <div class="flex items-center space-x-2 sm:space-x-3">
+
+            <div class="bg-amber-400 p-2 sm:p-2.5 rounded-2xl shadow-inner text-amber-900 font-bold flex items-center gap-1.5">
+
+                <span class="text-lg sm:text-2xl">⭐</span>
+
+                <span id="star-count" class="text-lg sm:text-2xl">0</span>
+
+            </div>
+
+            <div class="bg-indigo-100 px-3 py-1.5 sm:py-2 rounded-2xl text-indigo-800 font-semibold text-xs sm:text-base">
+
+                Streak: 🔥 <span id="streak-count">0</span>
+
+            </div>
+
+            <!-- ADAPTIVE LEVEL BADGE -->
+
+            <div id="level-badge" class="bg-emerald-100 border-2 border-emerald-400 px-3 py-1.5 rounded-2xl text-emerald-800 font-bold text-xs sm:text-sm flex items-center gap-1">
+
+                <span>🎯</span> <span id="level-text">Level 1 (Sums to 10)</span>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="flex items-center gap-2">
+
+            <!-- MODE CONTROL -->
+
+            <select id="mode-select" class="bg-indigo-100 text-indigo-900 font-bold py-1.5 px-2.5 rounded-xl border-2 border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer text-xs sm:text-sm">
+
+                <option value="adaptive" selected>🔀 Mixed Adaptive</option>
+
+                <option value="missing">❓ Missing Addends</option>
+
+                <option value="addition">➕ Addition</option>
+
+                <option value="subtraction">➖ Subtraction</option>
+
+            </select>
+
+            <button id="finish-btn" onclick="showSummaryModal()" class="bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl border-2 border-purple-300 font-bold text-xs sm:text-sm transition">
+
+                🏆 Stats
+
+            </button>
+
+            <button id="sound-btn" onclick="toggleSound()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-xl border-2 border-slate-300 transition text-base sm:text-lg" title="Toggle Sound">
+
+                🔊
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <main class="w-full max-w-3xl flex-1 flex flex-col justify-center items-center">
+
+        <!-- GAME CONTAINER -->
+
+        <div class="w-full bg-white/95 backdrop-blur shadow-2xl rounded-3xl border-4 border-indigo-200 p-4 sm:p-8 flex flex-col items-center relative overflow-hidden transition-all duration-300">
+
+
+
+            <!-- MASCOT & DIALOGUE -->
+
+            <div class="flex items-center gap-3 w-full mb-4 bg-indigo-50/80 p-3 sm:p-4 rounded-2xl border-2 border-indigo-100">
+
+                <div id="mascot" class="text-4xl sm:text-5xl bounce-gentle flex-shrink-0 cursor-pointer" onclick="playMascotSound()">
+
+                    🦉
+
+                </div>
+
+                <div id="mascot-speech" class="text-slate-700 font-medium text-sm sm:text-lg leading-snug">
+
+                    Hi Explorer! Let's solve this math mystery!
+
+                </div>
+
+            </div>
+
+
+
+            <!-- RETRY BANNER -->
+
+            <div id="retry-indicator" class="hidden mb-2 px-4 py-1.5 bg-amber-100 border-2 border-amber-400 rounded-full text-amber-900 font-bold text-xs sm:text-sm flex items-center gap-1.5 animate-pulse">
+
+                <span>🔄</span> <span>Second Chance! Try solving this exact problem on your own!</span>
+
+            </div>
+
+
+
+            <!-- EQUATION DISPLAY AREA -->
+
+            <div id="equation-box" class="my-3 sm:my-6 py-4 px-6 bg-amber-50 rounded-3xl border-4 border-dashed border-amber-300 flex items-center justify-center flex-wrap gap-2 sm:gap-4 text-3xl sm:text-5xl lg:text-6xl font-bold text-slate-800 shadow-inner">
+
+                <!-- Dynamic Equation Content inserted via JS -->
+
+            </div>
+
+
+
+            <!-- PRIMARY SUBMIT BUTTON -->
+
+            <div id="equation-controls" class="w-full flex justify-center gap-3 mt-2">
+
+                <button id="check-btn" onclick="checkAnswer()" class="w-full sm:w-2/3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xl sm:text-2xl py-3 sm:py-4 px-8 rounded-2xl shadow-lg border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-all flex items-center justify-center gap-2">
+
+                    <span>Check Answer</span> 🚀
+
+                </button>
+
+            </div>
+
+
+
+            <!-- VIRTUAL NUMPAD FOR EASY TOUCH INPUT -->
+
+            <div id="numpad" class="grid grid-cols-5 gap-2 mt-6 w-full max-w-md">
+
+                <!-- Numbers 0-9 generated via JavaScript -->
+
+            </div>
+
+
+
+            <!-- VISUAL HELP / TEN FRAMES WORKSPACE -->
+
+            <div id="visual-workspace" class="hidden w-full mt-6 bg-sky-50 rounded-3xl border-4 border-sky-300 p-4 sm:p-6 flex flex-col items-center animate-fade-in">
+
+
+
+                <div class="text-center mb-4">
+
+                    <h3 class="text-lg sm:text-2xl font-bold text-sky-900 flex items-center justify-center gap-2">
+
+                        <span>💡</span> <span id="help-title">Let's build it step by step!</span>
+
+                    </h3>
+
+                    <p id="help-description" class="text-xs sm:text-base text-sky-700 mt-1">
+
+                        Use the ten-frames below to solve the problem visually!
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- TEN-FRAMES CONTAINER -->
+
+                <div id="ten-frames-container" class="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4 my-3 w-full">
+
+                    <!-- Dynamic Ten Frames inserted here -->
+
+                </div>
+
+
+
+                <!-- VISUAL COUNTER TRACKER -->
+
+                <div id="workspace-tracker" class="flex items-center gap-2 sm:gap-6 my-3 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-sky-200 shadow-sm text-sm sm:text-lg">
+
+                    <!-- Dynamic Tracker content -->
+
+                </div>
+
+
+
+                <!-- WORKSPACE ACTION BUTTONS -->
+
+                <div class="flex flex-wrap gap-3 mt-3 justify-center w-full">
+
+                    <button id="action-dot-btn" onclick="handleVisualActionButton()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-base sm:text-lg py-3 px-6 rounded-2xl shadow-md border-b-4 border-amber-600 active:translate-y-0.5 active:border-b-0 transition flex items-center gap-2">
+
+                        <span id="action-btn-text">➕ Add 1 Dot</span>
+
+                    </button>
+
+                    <button id="reset-dots-btn" onclick="resetVisualWorkspace()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-base sm:text-lg py-3 px-4 rounded-2xl transition border-2 border-slate-300">
+
+                        🔄 Reset
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- SUCCESS & CONTINUE BANNER INSIDE HELP -->
+
+                <div id="help-complete-banner" class="hidden mt-4 p-4 bg-emerald-100 border-2 border-emerald-400 rounded-2xl text-center w-full">
+
+                    <p id="help-success-title" class="text-emerald-900 font-bold text-lg sm:text-xl">
+
+                        🎉 Great job!
+
+                    </p>
+
+                    <p id="help-success-equation" class="text-emerald-800 text-sm sm:text-base mt-1 font-bold">
+
+                        7 + 13 = 20
+
+                    </p>
+
+                    <button onclick="nextQuestionAfterHelp()" class="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg py-3 px-8 rounded-xl shadow-lg border-b-4 border-emerald-800 transition">
+
+                        Now Try Problem Again ➔
+
+                    </button>
+
+                </div>
+
+
+
+            </div>
+
+
+
+        </div>
+
+    </main>
+
+
+
+    <!-- SESSION SUMMARY MODAL -->
+
+    <div id="summary-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+
+        <div class="bg-white rounded-3xl border-4 border-indigo-300 p-6 sm:p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-pop">
+
+            <div class="text-5xl mb-2">🏆</div>
+
+            <h2 class="text-2xl sm:text-3xl font-bold text-indigo-900 mb-2">Explorer Report Card</h2>
+
+            <p class="text-slate-600 text-sm mb-6">Here is your progress for this session!</p>
+
+
+
+            <div class="grid grid-cols-2 gap-4 w-full mb-6">
+
+                <div class="bg-amber-50 p-3 rounded-2xl border-2 border-amber-200 flex flex-col items-center">
+
+                    <span class="text-2xl">⭐</span>
+
+                    <span id="modal-stars" class="text-xl sm:text-2xl font-bold text-amber-900">0</span>
+
+                    <span class="text-xs text-amber-700 font-semibold">Stars Earned</span>
+
+                </div>
+
+                <div class="bg-emerald-50 p-3 rounded-2xl border-2 border-emerald-200 flex flex-col items-center">
+
+                    <span class="text-2xl">✅</span>
+
+                    <span id="modal-solved" class="text-xl sm:text-2xl font-bold text-emerald-900">0</span>
+
+                    <span class="text-xs text-emerald-700 font-semibold">Solved Correctly</span>
+
+                </div>
+
+                <div class="bg-indigo-50 p-3 rounded-2xl border-2 border-indigo-200 flex flex-col items-center">
+
+                    <span class="text-2xl">🔥</span>
+
+                    <span id="modal-streak" class="text-xl sm:text-2xl font-bold text-indigo-900">0</span>
+
+                    <span class="text-xs text-indigo-700 font-semibold">Best Streak</span>
+
+                </div>
+
+                <div class="bg-sky-50 p-3 rounded-2xl border-2 border-sky-200 flex flex-col items-center">
+
+                    <span class="text-2xl">🎯</span>
+
+                    <span id="modal-accuracy" class="text-xl sm:text-2xl font-bold text-sky-900">100%</span>
+
+                    <span class="text-xs text-sky-700 font-semibold">Accuracy</span>
+
+                </div>
+
+            </div>
+
+
+
+            <button onclick="closeSummaryModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg py-3 rounded-2xl shadow-lg border-b-4 border-indigo-800 transition">
+
+                Keep Playing! 🚀
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- FOOTER -->
+
+    <footer class="mt-4 text-center text-xs sm:text-sm text-slate-500 font-medium">
+
+        Math Explorers: Missing Addend & Math Mystery 🌟 Designed for 2nd Grade
+
+    </footer>
+
+
+
+    <script>
+
+        /* GAME STATE MANAGEMENT */
+
+        let state = {
+
+            adaptiveLevel: 1, // 1: Sums<=10, 2: Sums<=15, 3: Sums<=20, 4: Add & Subtraction <=20
+
+            consecutiveSuccesses: 0,
+
+            failCountOnCurrent: 0,
+
+            isRetry: false,
+
+
+
+            currentProblem: {
+
+                num1: 7,
+
+                num2: 13,
+
+                target: 20,
+
+                operator: '+',
+
+                missingPosition: 2,
+
+                correctAnswer: 13
+
+            },
+
+
+
+            addedCounters: 0,
+
+            removedCounters: 0,
+
+
+
+            stars: 0,
+
+            streak: 0,
+
+            maxStreak: 0,
+
+            totalAttempts: 0,
+
+            correctAttempts: 0,
+
+            soundEnabled: true,
+
+            isHelpActive: false,
+
+            selectedMode: 'adaptive'
+
+        };
+
+
+
+        /* WEB AUDIO API SOUND EFFECTS SYNTHESIZER */
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+        let audioCtx = null;
+
+
+
+        function initAudio() {
+
+            if (!audioCtx) audioCtx = new AudioContext();
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        }
+
+
+
+        function playSound(type) {
+
+            if (!state.soundEnabled) return;
+
+            initAudio();
+
+            if (!audioCtx) return;
+
+
+
+            const now = audioCtx.currentTime;
+
+
+
+            if (type === 'pop') {
+
+                const osc = audioCtx.createOscillator();
+
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+
+                osc.frequency.setValueAtTime(300 + ((state.addedCounters + state.removedCounters) * 40), now);
+
+                osc.frequency.exponentialRampToValueAtTime(650 + ((state.addedCounters + state.removedCounters) * 40), now + 0.08);
+
+
+
+                gain.gain.setValueAtTime(0.3, now);
+
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+
+
+                osc.connect(gain);
+
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+
+                osc.stop(now + 0.08);
+
+            } 
+
+            else if (type === 'correct') {
+
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+
+                notes.forEach((freq, idx) => {
+
+                    const osc = audioCtx.createOscillator();
+
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'triangle';
+
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+
+
+
+                    gain.gain.setValueAtTime(0.25, now + idx * 0.08);
+
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
+
+
+
+                    osc.connect(gain);
+
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now + idx * 0.08);
+
+                    osc.stop(now + idx * 0.08 + 0.3);
+
+                });
+
+            } 
+
+            else if (type === 'oops') {
+
+                const osc = audioCtx.createOscillator();
+
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+
+                osc.frequency.setValueAtTime(240, now);
+
+                osc.frequency.exponentialRampToValueAtTime(160, now + 0.15);
+
+
+
+                gain.gain.setValueAtTime(0.3, now);
+
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+
+
+                osc.connect(gain);
+
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+
+                osc.stop(now + 0.2);
+
+            }
+
+            else if (type === 'fanfare') {
+
+                const fanfareNotes = [440, 554.37, 659.25, 880];
+
+                fanfareNotes.forEach((freq, i) => {
+
+                    const osc = audioCtx.createOscillator();
+
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'sine';
+
+                    osc.frequency.setValueAtTime(freq, now + i * 0.1);
+
+                    gain.gain.setValueAtTime(0.3, now + i * 0.1);
+
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.4);
+
+                    osc.connect(gain);
+
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now + i * 0.1);
+
+                    osc.stop(now + i * 0.1 + 0.4);
+
+                });
+
+            }
+
+        }
+
+
+
+        function toggleSound() {
+
+            state.soundEnabled = !state.soundEnabled;
+
+            const btn = document.getElementById('sound-btn');
+
+            btn.textContent = state.soundEnabled ? '🔊' : '🔇';
+
+            btn.classList.toggle('bg-slate-300', !state.soundEnabled);
+
+        }
+
+
+
+        function playMascotSound() {
+
+            const mascot = document.getElementById('mascot');
+
+            mascot.classList.add('wiggle');
+
+            setTimeout(() => mascot.classList.remove('wiggle'), 500);
+
+            playSound('pop');
+
+        }
+
+
+
+        function renderNumpad() {
+
+            const container = document.getElementById('numpad');
+
+            container.innerHTML = '';
+
+
+
+            const buttons = ['1','2','3','4','5','6','7','8','9','0','⌫'];
+
+
+
+            buttons.forEach(btn => {
+
+                const b = document.createElement('button');
+
+                b.className = `py-2.5 sm:py-3 text-xl sm:text-2xl font-bold rounded-2xl shadow border-b-2 active:translate-y-0.5 transition ${
+
+                    btn === '⌫' 
+
+                        ? 'bg-rose-100 hover:bg-rose-200 text-rose-700 border-rose-300 col-span-2' 
+
+                        : 'bg-slate-100 hover:bg-indigo-100 text-slate-800 border-slate-300'
+
+                }`;
+
+                b.textContent = btn;
+
+                b.onclick = (e) => {
+
+                    e.preventDefault();
+
+                    handleNumpadClick(btn);
+
+                };
+
+                container.appendChild(b);
+
+            });
+
+        }
+
+
+
+        function handleNumpadClick(key) {
+
+            initAudio();
+
+            const input = document.getElementById('answer-input');
+
+            if (state.isHelpActive || !input) return;
+
+
+
+            if (key === '⌫') {
+
+                input.value = input.value.slice(0, -1);
+
+            } else {
+
+                if (input.value.length < 2) {
+
+                    input.value += key;
+
+                }
+
+            }
+
+            playSound('pop');
+
+            input.focus();
+
+        }
+
+
+
+        function updateLevelBadge() {
+
+            const badgeText = document.getElementById('level-text');
+
+            const levelTitles = {
+
+                1: "Level 1 (Sums to 10)",
+
+                2: "Level 2 (Sums to 15)",
+
+                3: "Level 3 (Sums to 20)",
+
+                4: "Level 4 (Add & Subtract <=20 🧙‍♂️)"
+
+            };
+
+            badgeText.textContent = levelTitles[state.adaptiveLevel] || "Level 1";
+
+        }
+
+
+
+        function generateProblem() {
+
+            if (state.isRetry) {
+
+                renderEquationUI();
+
+                document.getElementById('retry-indicator').classList.remove('hidden');
+
+                setMascot('🦉', "You've got this! Try solving the mystery problem again!");
+
+                return;
+
+            }
+
+
+
+            document.getElementById('retry-indicator').classList.add('hidden');
+
+            state.selectedMode = document.getElementById('mode-select').value;
+
+
+
+            let maxLimit = 10;
+
+            if (state.adaptiveLevel === 2) maxLimit = 15;
+
+            if (state.adaptiveLevel >= 3) maxLimit = 20;
+
+
+
+            let operator = '+';
+
+            if (state.selectedMode === 'subtraction') {
+
+                operator = '-';
+
+            } else if (state.selectedMode === 'adaptive' && state.adaptiveLevel === 4) {
+
+                operator = Math.random() < 0.35 ? '-' : '+';
+
+            }
+
+
+
+            let missingPos = 2; 
+
+            if (state.selectedMode === 'addition') {
+
+                missingPos = 3;
+
+            } else if (state.selectedMode === 'missing') {
+
+                missingPos = Math.random() < 0.75 ? 2 : 1;
+
+            } else {
+
+                const rand = Math.random();
+
+                if (rand < 0.5) missingPos = 2;
+
+                else if (rand < 0.75) missingPos = 3;
+
+                else missingPos = 1;
+
+            }
+
+
+
+            if (operator === '+') {
+
+                const targetSum = Math.floor(Math.random() * (maxLimit - 4 + 1)) + 4;
+
+                const num1 = Math.floor(Math.random() * (targetSum - 2)) + 1;
+
+                const num2 = targetSum - num1;
+
+
+
+                let answer = num2;
+
+                if (missingPos === 1) answer = num1;
+
+                if (missingPos === 3) answer = targetSum;
+
+
+
+                state.currentProblem = {
+
+                    num1, num2, target: targetSum, operator: '+', missingPosition: missingPos, correctAnswer: answer
+
+                };
+
+            } else {
+
+                const startNum = Math.floor(Math.random() * (maxLimit - 4 + 1)) + 4;
+
+                const takeAway = Math.floor(Math.random() * (startNum - 2)) + 1;
+
+                const remainder = startNum - takeAway;
+
+
+
+                let answer = takeAway;
+
+                if (missingPos === 1) answer = startNum;
+
+                if (missingPos === 2) answer = takeAway;
+
+                if (missingPos === 3) answer = remainder;
+
+
+
+                state.currentProblem = {
+
+                    num1: startNum, num2: takeAway, target: remainder, operator: '-', missingPosition: missingPos, correctAnswer: answer
+
+                };
+
+            }
+
+
+
+            renderEquationUI();
+
+            setMascot('🦉', `Can you find the missing number to solve the math puzzle?`);
+
+        }
+
+
+
+        function renderEquationUI() {
+
+            const p = state.currentProblem;
+
+            const eqBox = document.getElementById('equation-box');
+
+            eqBox.innerHTML = '';
+
+
+
+            const inputHTML = `
+
+                <input type="number" id="answer-input" pattern="[0-9]*" inputmode="numeric" placeholder="?" 
+
+                    class="w-16 h-16 sm:w-24 sm:h-24 text-center rounded-2xl border-4 border-indigo-400 bg-white text-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-300 focus:border-indigo-600 shadow-md transition-all duration-200"
+
+                    autocomplete="off" />
+
+            `;
+
+
+
+            if (p.operator === '+') {
+
+                if (p.missingPosition === 1) {
+
+                    eqBox.innerHTML = `${inputHTML} <span class="text-indigo-500">+</span> <span>${p.num2}</span> <span class="text-indigo-500">=</span> <span class="text-emerald-600">${p.target}</span>`;
+
+                } else if (p.missingPosition === 2) {
+
+                    eqBox.innerHTML = `<span>${p.num1}</span> <span class="text-indigo-500">+</span> ${inputHTML} <span class="text-indigo-500">=</span> <span class="text-emerald-600">${p.target}</span>`;
+
+                } else {
+
+                    eqBox.innerHTML = `<span>${p.num1}</span> <span class="text-indigo-500">+</span> <span>${p.num2}</span> <span class="text-indigo-500">=</span> ${inputHTML}`;
+
+                }
+
+            } else {
+
+                if (p.missingPosition === 1) {
+
+                    eqBox.innerHTML = `${inputHTML} <span class="text-rose-500">-</span> <span>${p.num2}</span> <span class="text-rose-500">=</span> <span class="text-emerald-600">${p.target}</span>`;
+
+                } else if (p.missingPosition === 2) {
+
+                    eqBox.innerHTML = `<span>${p.num1}</span> <span class="text-rose-500">-</span> ${inputHTML} <span class="text-rose-500">=</span> <span class="text-emerald-600">${p.target}</span>`;
+
+                } else {
+
+                    eqBox.innerHTML = `<span>${p.num1}</span> <span class="text-rose-500">-</span> <span>${p.num2}</span> <span class="text-rose-500">=</span> ${inputHTML}`;
+
+                }
+
+            }
+
+
+
+            document.getElementById('visual-workspace').classList.add('hidden');
+
+            document.getElementById('equation-controls').classList.remove('hidden');
+
+            document.getElementById('numpad').classList.remove('hidden');
+
+            state.isHelpActive = false;
+
+
+
+            const input = document.getElementById('answer-input');
+
+            input.addEventListener('keydown', function(e) {
+
+                if (e.key === 'Enter') checkAnswer();
+
+            });
+
+            setTimeout(() => input.focus(), 100);
+
+        }
+
+
+
+        function setMascot(emoji, text) {
+
+            document.getElementById('mascot').textContent = emoji;
+
+            document.getElementById('mascot-speech').textContent = text;
+
+        }
+
+
+
+        function checkAnswer() {
+
+            initAudio();
+
+            const input = document.getElementById('answer-input');
+
+            if (!input) return;
+
+            const val = parseInt(input.value.trim());
+
+
+
+            if (isNaN(val)) {
+
+                setMascot('🤔', "Type a number in the box first!");
+
+                input.focus();
+
+                return;
+
+            }
+
+
+
+            state.totalAttempts++;
+
+
+
+            if (val === state.currentProblem.correctAnswer) {
+
+                // CORRECT ANSWER
+
+                playSound('correct');
+
+                state.stars += 1;
+
+                state.streak += 1;
+
+                if (state.streak > state.maxStreak) state.maxStreak = state.streak;
+
+                state.correctAttempts++;
+
+                state.consecutiveSuccesses += 1;
+
+                state.failCountOnCurrent = 0;
+
+                state.isRetry = false;
+
+
+
+                input.className = "w-16 h-16 sm:w-24 sm:h-24 text-center rounded-2xl border-4 border-emerald-500 bg-emerald-100 text-emerald-700 font-bold shadow-md animate-bounce";
+
+
+
+                // Adaptive Level Up
+
+                if (state.selectedMode === 'adaptive' && state.consecutiveSuccesses >= 3 && state.adaptiveLevel < 4) {
+
+                    state.adaptiveLevel += 1;
+
+                    state.consecutiveSuccesses = 0;
+
+                    updateLevelBadge();
+
+                    setMascot('🎉', `Awesome job! 3 in a row! LEVEL UP to Level ${state.adaptiveLevel}! 🌟`);
+
+                } else {
+
+                    setMascot('🎉', `Awesome job! You solved it correctly! ⭐`);
+
+                }
+
+
+
+                updateStats();
+
+
+
+                confetti({
+
+                    particleCount: 50,
+
+                    spread: 60,
+
+                    origin: { y: 0.7 }
+
+                });
+
+
+
+                input.disabled = true;
+
+
+
+                setTimeout(() => {
+
+                    generateProblem();
+
+                }, 1800);
+
+
+
+            } else {
+
+                // INCORRECT ANSWER
+
+                playSound('oops');
+
+                state.streak = 0;
+
+                state.consecutiveSuccesses = 0;
+
+                state.failCountOnCurrent += 1;
+
+                state.isRetry = true;
+
+
+
+                updateStats();
+
+
+
+                input.className = "w-16 h-16 sm:w-24 sm:h-24 text-center rounded-2xl border-4 border-rose-400 bg-rose-100 text-rose-600 shadow-md wiggle";
+
+
+
+                // Adaptive Downgrade
+
+                if (state.selectedMode === 'adaptive' && state.failCountOnCurrent >= 2 && state.adaptiveLevel > 1) {
+
+                    state.adaptiveLevel -= 1;
+
+                    state.failCountOnCurrent = 0;
+
+                    updateLevelBadge();
+
+                    setMascot('💡', `Let's adjust to Level ${state.adaptiveLevel} and build our confidence!`);
+
+                } else {
+
+                    setMascot('💡', `Not quite! Let's build it together with counters below!`);
+
+                }
+
+
+
+                setTimeout(() => {
+
+                    setupVisualWorkspace();
+
+                }, 800);
+
+            }
+
+        }
+
+
+
+        function setupVisualWorkspace() {
+
+            state.isHelpActive = true;
+
+            state.addedCounters = 0;
+
+            state.removedCounters = 0;
+
+
+
+            document.getElementById('numpad').classList.add('hidden');
+
+            document.getElementById('equation-controls').classList.add('hidden');
+
+
+
+            const workspace = document.getElementById('visual-workspace');
+
+            workspace.classList.remove('hidden');
+
+            workspace.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+
+
+            const p = state.currentProblem;
+
+            const desc = document.getElementById('help-description');
+
+            const title = document.getElementById('help-title');
+
+            const actionBtnText = document.getElementById('action-btn-text');
+
+
+
+            if (p.operator === '+') {
+
+                title.textContent = "Let's build addition step by step!";
+
+                if (p.missingPosition === 3) {
+
+                    desc.innerHTML = `We have <strong class="text-indigo-600">${p.num1}</strong> blue dots. Add <strong class="text-amber-600">${p.num2}</strong> star dots to find the total sum!`;
+
+                } else {
+
+                    desc.innerHTML = `We started with <strong class="text-indigo-600">${p.num1}</strong> dots. Add star dots until you reach <strong class="text-emerald-600">${p.target}</strong>!`;
+
+                }
+
+                actionBtnText.textContent = "➕ Add 1 Dot";
+
+            } else {
+
+                title.textContent = "Let's work out subtraction with counters!";
+
+                if (p.missingPosition === 3) {
+
+                    desc.innerHTML = `We have <strong class="text-indigo-600">${p.num1}</strong> dots. Take away <strong class="text-rose-600">${p.num2}</strong> dots!`;
+
+                } else {
+
+                    desc.innerHTML = `We have <strong class="text-indigo-600">${p.num1}</strong> dots. Take away dots until you have <strong class="text-emerald-600">${p.target}</strong> left!`;
+
+                }
+
+                actionBtnText.textContent = "❌ Take Away 1 Dot";
+
+            }
+
+
+
+            document.getElementById('help-complete-banner').classList.add('hidden');
+
+            const actBtn = document.getElementById('action-dot-btn');
+
+            actBtn.disabled = false;
+
+            actBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+
+
+            renderTenFrames();
+
+            updateWorkspaceTracker();
+
+        }
+
+
+
+        function renderTenFrames() {
+
+            const container = document.getElementById('ten-frames-container');
+
+            container.innerHTML = '';
+
+            const p = state.currentProblem;
+
+
+
+            let totalCapacity = p.operator === '+' ? Math.max(p.target, 10) : Math.max(p.num1, 10);
+
+            const totalNeededFrames = totalCapacity > 10 ? 2 : 1;
+
+
+
+            let counterIndex = 0;
+
+
+
+            for (let f = 0; f < totalNeededFrames; f++) {
+
+                const frameBox = document.createElement('div');
+
+                frameBox.className = "bg-white p-2.5 sm:p-3 rounded-2xl border-4 border-sky-300 shadow-md flex flex-col items-center";
+
+
+
+                const frameTitle = document.createElement('div');
+
+                frameTitle.className = "text-xs font-bold text-sky-600 mb-1.5 uppercase tracking-wide";
+
+                frameTitle.textContent = `Ten Frame #${f + 1}`;
+
+                frameBox.appendChild(frameTitle);
+
+
+
+                const grid = document.createElement('div');
+
+                grid.className = "grid grid-cols-5 gap-2 sm:gap-2.5";
+
+
+
+                for (let i = 0; i < 10; i++) {
+
+                    counterIndex++;
+
+                    const slot = document.createElement('button');
+
+                    slot.type = 'button';
+
+                    slot.dataset.index = counterIndex;
+
+
+
+                    if (p.operator === '+') {
+
+                        if (counterIndex <= p.target) {
+
+                            if (counterIndex <= p.num1) {
+
+                                slot.className = "w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-500 border-2 border-indigo-700 flex items-center justify-center text-white font-bold text-xs shadow-inner cursor-default";
+
+                                slot.innerHTML = `<span class="opacity-80">●</span>`;
+
+                            } else if (counterIndex <= p.num1 + state.addedCounters) {
+
+                                slot.className = "w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-400 border-2 border-amber-600 flex items-center justify-center text-amber-950 font-bold text-sm shadow-md counter-pop cursor-pointer";
+
+                                slot.innerHTML = `⭐`;
+
+                            } else {
+
+                                slot.className = "w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-dashed border-sky-300 bg-sky-50/50 flex items-center justify-center text-sky-300 hover:bg-amber-100 hover:border-amber-400 transition cursor-pointer";
+
+                                slot.innerHTML = `<span class="text-xs opacity-50">${counterIndex}</span>`;
+
+                                slot.onclick = () => handleSlotClick();
+
+                            }
+
+                        } else {
+
+                            slot.className = "w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-100 bg-slate-50/50 opacity-30 cursor-not-allowed";
+
+                        }
+
+                    } else {
+
+                        if (counterIndex <= p.num1) {
+
+                            if (counterIndex > p.num1 - state.removedCounters) {
+
+                                slot.className = "w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-rose-100 border-2 border-rose-300 flex items-center justify-center text-rose-500 font-bold text-base shadow-inner takeaway-cross cursor-pointer";
+
+                            } else {
+
+                                slot.className = "w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-500 border-2 border-indigo-700 flex items-center justify-center text-white font-bold text-xs shadow-md cursor-pointer";
+
+                                slot.innerHTML = `<span class="opacity-80">●</span>`;
+
+                                slot.onclick = () => handleSlotClick();
+
+                            }
+
+                        } else {
+
+                            slot.className = "w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-100 bg-slate-50/50 opacity-30 cursor-not-allowed";
+
+                        }
+
+                    }
+
+
+
+                    grid.appendChild(slot);
+
+                }
+
+
+
+                frameBox.appendChild(grid);
+
+                container.appendChild(frameBox);
+
+            }
+
+        }
+
+
+
+        function handleVisualActionButton() {
+
+            const p = state.currentProblem;
+
+            if (p.operator === '+') {
+
+                if (p.num1 + state.addedCounters < p.target) {
+
+                    state.addedCounters++;
+
+                    playSound('pop');
+
+                    renderTenFrames();
+
+                    updateWorkspaceTracker();
+
+                    checkVisualCompletion();
+
+                }
+
+            } else {
+
+                if (state.removedCounters < p.num2 || (p.missingPosition === 2 && state.removedCounters < (p.num1 - p.target))) {
+
+                    state.removedCounters++;
+
+                    playSound('pop');
+
+                    renderTenFrames();
+
+                    updateWorkspaceTracker();
+
+                    checkVisualCompletion();
+
+                }
+
+            }
+
+        }
+
+
+
+        function handleSlotClick() {
+
+            handleVisualActionButton();
+
+        }
+
+
+
+        function checkVisualCompletion() {
+
+            const p = state.currentProblem;
+
+            if (p.operator === '+') {
+
+                if (p.missingPosition === 3 && state.addedCounters === p.num2) {
+
+                    onVisualHelpCompleted();
+
+                } else if (p.missingPosition !== 3 && p.num1 + state.addedCounters === p.target) {
+
+                    onVisualHelpCompleted();
+
+                }
+
+            } else {
+
+                if (p.missingPosition === 3 && state.removedCounters === p.num2) {
+
+                    onVisualHelpCompleted();
+
+                } else if (p.missingPosition === 2 && state.removedCounters === (p.num1 - p.target)) {
+
+                    onVisualHelpCompleted();
+
+                } else if (p.missingPosition === 1 && state.removedCounters === p.num2) {
+
+                    onVisualHelpCompleted();
+
+                }
+
+            }
+
+        }
+
+
+
+        function resetVisualWorkspace() {
+
+            state.addedCounters = 0;
+
+            state.removedCounters = 0;
+
+            playSound('pop');
+
+            renderTenFrames();
+
+            updateWorkspaceTracker();
+
+            document.getElementById('help-complete-banner').classList.add('hidden');
+
+            document.getElementById('action-dot-btn').disabled = false;
+
+            document.getElementById('action-dot-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+
+        }
+
+
+
+        function updateWorkspaceTracker() {
+
+            const tracker = document.getElementById('workspace-tracker');
+
+            const p = state.currentProblem;
+
+
+
+            if (p.operator === '+') {
+
+                tracker.innerHTML = `
+
+                    <div class="flex items-center gap-1.5">
+
+                        <span class="w-4 h-4 rounded-full bg-indigo-500 inline-block"></span>
+
+                        <span>Start: <strong>${p.num1}</strong></span>
+
+                    </div>
+
+                    <span class="text-sky-300 font-bold">+</span>
+
+                    <div class="flex items-center gap-1.5">
+
+                        <span class="w-4 h-4 rounded-full bg-amber-400 inline-block"></span>
+
+                        <span>Added: <strong class="text-amber-600 text-xl">${state.addedCounters}</strong></span>
+
+                    </div>
+
+                    <span class="text-sky-300 font-bold">=</span>
+
+                    <div>
+
+                        <span>Total: <strong class="text-emerald-600">${p.num1 + state.addedCounters}</strong> / <span>${p.target}</span></span>
+
+                    </div>
+
+                `;
+
+            } else {
+
+                const remaining = p.num1 - state.removedCounters;
+
+                tracker.innerHTML = `
+
+                    <div class="flex items-center gap-1.5">
+
+                        <span class="w-4 h-4 rounded-full bg-indigo-500 inline-block"></span>
+
+                        <span>Start: <strong>${p.num1}</strong></span>
+
+                    </div>
+
+                    <span class="text-rose-400 font-bold">-</span>
+
+                    <div class="flex items-center gap-1.5">
+
+                        <span class="w-4 h-4 rounded-full bg-rose-200 border border-rose-400 inline-block"></span>
+
+                        <span>Took Away: <strong class="text-rose-600 text-xl">${state.removedCounters}</strong></span>
+
+                    </div>
+
+                    <span class="text-sky-300 font-bold">=</span>
+
+                    <div>
+
+                        <span>Left: <strong class="text-emerald-600">${remaining}</strong></span>
+
+                    </div>
+
+                `;
+
+            }
+
+        }
+
+
+
+        function onVisualHelpCompleted() {
+
+            playSound('fanfare');
+
+
+
+            const actBtn = document.getElementById('action-dot-btn');
+
+            actBtn.disabled = true;
+
+            actBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+
+
+            const p = state.currentProblem;
+
+            const input = document.getElementById('answer-input');
+
+            input.value = p.correctAnswer;
+
+            input.className = "w-16 h-16 sm:w-24 sm:h-24 text-center rounded-2xl border-4 border-amber-400 bg-amber-100 text-amber-800 font-bold shadow-md";
+
+
+
+            const banner = document.getElementById('help-complete-banner');
+
+            const eqSummary = document.getElementById('help-success-equation');
+
+
+
+            if (p.operator === '+') {
+
+                eqSummary.textContent = `${p.num1} + ${p.num2} = ${p.target}`;
+
+            } else {
+
+                eqSummary.textContent = `${p.num1} - ${p.num2} = ${p.target}`;
+
+            }
+
+
+
+            banner.classList.remove('hidden');
+
+
+
+            setMascot('🌟', `Great job! Now try solving this exact problem on your own!`);
+
+
+
+            confetti({
+
+                particleCount: 40,
+
+                spread: 50,
+
+                origin: { y: 0.8 }
+
+            });
+
+        }
+
+
+
+        function nextQuestionAfterHelp() {
+
+            generateProblem();
+
+        }
+
+
+
+        function updateStats() {
+
+            document.getElementById('star-count').textContent = state.stars;
+
+            document.getElementById('streak-count').textContent = state.streak;
+
+        }
+
+
+
+        function showSummaryModal() {
+
+            document.getElementById('modal-stars').textContent = state.stars;
+
+            document.getElementById('modal-solved').textContent = state.correctAttempts;
+
+            document.getElementById('modal-streak').textContent = state.maxStreak;
+
+
+
+            const acc = state.totalAttempts > 0 ? Math.round((state.correctAttempts / state.totalAttempts) * 100) : 100;
+
+            document.getElementById('modal-accuracy').textContent = `${acc}%`;
+
+
+
+            document.getElementById('summary-modal').classList.remove('hidden');
+
+        }
+
+
+
+        function closeSummaryModal() {
+
+            document.getElementById('summary-modal').classList.add('hidden');
+
+        }
+
+
+
+        /* EVENT LISTENERS & INITIALIZATION */
+
+        document.getElementById('mode-select').addEventListener('change', function() {
+
+            state.consecutiveSuccesses = 0;
+
+            state.isRetry = false;
+
+            generateProblem();
+
+        });
+
+
+
+        window.onload = function() {
+
+            renderNumpad();
+
+            updateLevelBadge();
+
+            generateProblem();
+
+        };
+
+    </script>
+
+</body>
+
+</html>
